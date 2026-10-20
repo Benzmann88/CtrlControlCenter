@@ -1,0 +1,9 @@
+.env
+.git
+backups
+__pycache__
+*.db
+*.db-*
+*.sqlite*
+*.zip
+*.log

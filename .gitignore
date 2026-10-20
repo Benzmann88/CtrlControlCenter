@@ -1,0 +1,16 @@
+# Default deny: publish only explicitly reviewed source files.
+/*
+!/app.py
+!/Dockerfile
+!/requirements.txt
+!/compose.yaml
+!/setup.sh
+!/.env.example
+!/.gitignore
+!/.dockerignore
+!/README.md
+!/static/
+/static/*
+!/static/index.html
+!/static/app.js
+!/static/style.css
