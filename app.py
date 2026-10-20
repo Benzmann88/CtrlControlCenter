@@ -8,6 +8,15 @@ from aiohttp import web
 
 BASE = os.getenv('BASE_DOMAIN', 'ctrl.example.com').lower()
 SCHEME = os.getenv('PUBLIC_SCHEME', 'https')
+TILE_PARENT = os.getenv('TILE_PARENT_DOMAIN', '').lower().strip('.')
+def tile_host(sid):
+    return f'ctrl-{sid}.{TILE_PARENT}' if TILE_PARENT else f'{sid}.{BASE}'
+def tile_sid(h):
+    if TILE_PARENT:
+        m = re.fullmatch(r'ctrl-([a-f0-9]{16})\.' + re.escape(TILE_PARENT), h)
+    else:
+        m = re.fullmatch(r'([a-f0-9]{16})\.' + re.escape(BASE), h)
+    return m.group(1) if m else None
 DB = os.getenv('DB_PATH', '/data/styringar.db')
 COOKIE = '__Host-styringar' if SCHEME == 'https' else 'styringar'
 PROXY_COOKIE = '__Host-styringar_proxy' if SCHEME == 'https' else 'styringar_proxy'
@@ -159,7 +168,7 @@ class PinnedResolver(aiohttp.abc.AbstractResolver):
 @web.middleware
 async def security(req, handler):
     h = host(req)
-    if h != BASE and not re.fullmatch(r'[a-f0-9]{16}\.'+re.escape(BASE),h):
+    if h != BASE and not tile_sid(h):
         raise web.HTTPMisdirectedRequest()
     if h == BASE and req.path.startswith('/api/') and req.method not in ('GET','HEAD','OPTIONS'):
         if req.headers.get('Origin') != f'{SCHEME}://{BASE}':
@@ -330,10 +339,10 @@ async def launch(req):
         c.execute('DELETE FROM tickets WHERE expires<?',(int(time.time()),))
         c.execute('INSERT INTO tickets VALUES(?,?,?,?)',(token_hash(t),u['id'],sid,int(time.time())+30))
         audit(c,u['id'],'site_opened',sid)
-    raise web.HTTPFound(f'{SCHEME}://{sid}.{BASE}/__styringar_auth?ticket={t}')
+    raise web.HTTPFound(f'{SCHEME}://{tile_host(sid)}/__styringar_auth?ticket={t}')
 
 async def proxy(req):
-    sid=host(req).split('.')[0]
+    sid=tile_sid(host(req))
     scope='site:'+sid
     with closing(db()) as c,c:
         s=c.execute('SELECT * FROM sites WHERE id=?',(sid,)).fetchone()

@@ -11,6 +11,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       ALLOWED_TARGETS: ${ALLOWED_TARGETS:-}
       ALLOW_PRIVATE_TARGETS: ${ALLOW_PRIVATE_TARGETS:-false}
+      TILE_PARENT_DOMAIN: ${TILE_PARENT_DOMAIN:-}
     volumes:
       - styringar-data:/data
     read_only: true
